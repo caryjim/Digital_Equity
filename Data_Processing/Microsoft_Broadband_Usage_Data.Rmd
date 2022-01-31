@@ -1,0 +1,230 @@
+---
+title: "Microsoft Broadband Usage 2020 Data Processing"
+author: "Cary K. Jim"
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r  Library}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(stringr)
+library(janitor)
+library(psych)
+library(readxl)
+library(psychTools)
+```
+
+# Microsoft Usage Data
+Source:<https://github.com/microsoft/USBroadbandUsagePercentages>
+
+# Oct 2020 data
+
+## County Level
+
+```{r}
+microsoft_2020_county <- 'https://raw.githubusercontent.com/microsoft/USBroadbandUsagePercentages/master/dataset/broadband_data_2020October.csv'
+
+# The regular reading will not work because of in-line text within the csv file in the 2020 dataset
+usage_county_2020 <- read.csv(url(microsoft_2020_county), header = T, sep = ",", strip.white = TRUE, fileEncoding="UTF-8-BOM", na.strings = "-")
+
+#' reload the usage data by skipping the top 18 rows (n = 3142)
+usage_county_2020 <- read.csv(url(microsoft_2020_county), skip = 18, header = T, sep = ",", strip.white = TRUE, fileEncoding="UTF-8-BOM")
+
+```
+
+### Dataframe Overview
+
+```{r}
+head(usage_county_2020)
+```
+
+```{r}
+str(usage_county_2020)
+```
+
+Notice a few things from looking at the information. COUNTY.ID was
+loaded as integer,'BROADBAND.AVAILABILITY.PER.FCC' & 'BROADBAND.USAGE'
+was loaded as characters. We have to correct the data types before next
+step.
+
+```{r Rename Columns}
+#Rename columns to make timeframe explicit in the variables 
+usage_county_2020 <- usage_county_2020 %>%
+  rename(FCC2019_AVAIL = BROADBAND.AVAILABILITY.PER.FCC,
+         USAGE_2020 = BROADBAND.USAGE)
+```
+
+```{r Convert to Numeric}
+#Convert the columns to number if read in as characters
+usage_county_2020[4:5] <- lapply(usage_county_2020[4:5], as.numeric)
+```
+
+```{r Convert to Characters}
+#Then, convert the COUNTY.ID to character 
+usage_county_2020[2] <- as.character(usage_county_2020$COUNTY.ID)
+# For a proper FIPS, there should be leading zero to it. For now, I'm ignoring this matter and will handle it later.
+```
+
+### Review data type after change
+
+```{r}
+str(usage_county_2020)
+```
+
+### Missing values in the Oct 2020 County Level Usage Dataset
+
+```{r}
+#There are 20 County without either Broadband Availability information or Usage Information 
+usage_county_2020[!complete.cases(usage_county_2020), ]
+```
+
+### Number of Countes by State
+
+```{r}
+usage_county_2020 %>% count(ST)
+```
+
+## ZIP Code Level
+
+```{r}
+microsoft_2020_ZIP <- "https://raw.githubusercontent.com/microsoft/USBroadbandUsagePercentages/master/dataset/broadband_data_zipcode.csv"
+usage_ZIP_2020 <- read.csv(url(microsoft_2020_ZIP), header = T, sep = ",", strip.white = TRUE, fileEncoding="UTF-8-BOM")
+```
+
+### Dataframe Overview
+
+```{r}
+head(usage_ZIP_2020)
+```
+
+```{r Rename_Columns}
+#Rename columns to make timeframe explicit in the variables and fixed the long names 
+usage_ZIP_2020 <- usage_ZIP_2020 %>% 
+  rename(USAGE_2020 = BROADBAND.USAGE)
+
+colnames(usage_ZIP_2020)[6:7] <- c("MAE", "Percentile")
+```
+
+### Review data types
+
+```{r}
+str(usage_ZIP_2020)
+```
+
+For the ZIP level dataset, the usage information and its error range
+were in the correct form as numeric. For COUNTY.ID and POSTAL.CODE, they
+need to be converted to characters. Also, POSTAL.CODE will be renamed to
+ZIP for ease of use at a later time.
+
+```{r}
+usage_ZIP_2020[3:4] <- lapply(usage_ZIP_2020[3:4], as.character)
+```
+
+Rename the POSTAL.CODE column to ZIP
+
+```{r Rename Postal Code to ZIP}
+colnames(usage_ZIP_2020)[4] <- "ZIP"
+```
+
+### Review data type after conversion
+
+```{r}
+str(usage_ZIP_2020)
+```
+
+### Check Missing Values
+
+```{r Missing Values}
+usage_ZIP_2020[!complete.cases(usage_ZIP_2020), ]
+```
+
+### Check Duplicated Rows
+
+```{r Duplicated ZIP code}
+sum(duplicated(usage_ZIP_2020$ZIP))
+```
+
+```{r Which ZIP code is duplicated?}
+usage_ZIP_2020$ZIP[duplicated(usage_ZIP_2020$ZIP)]
+```
+
+```{r Example Kodiak Island Borough, AK}
+usage_ZIP_2020 %>% filter(ZIP == "99554" | ZIP == "99658") 
+# This county has two ID in which the 2150 is the correct COUNTY.ID as of 2010. County.ID 2158 is an old COUNTY.ID. 
+```
+Reference to Census Technical Documentation on County Changes in 2010.
+<https://www.census.gov/programs-surveys/geography/technical-documentation/county-changes.2010.html>
+```{r Remove the old COUNTY.ID for Kodiak}
+usage_ZIP_2020 <- usage_ZIP_2020[!(usage_ZIP_2020$COUNTY.ID == "2158"),]
+# The resulting dataframe is 32718 rows 
+```
+### Re-check duplicated rows after handling the Kodiak Island Borough records 
+```{r}
+usage_ZIP_2020$ZIP[duplicated(usage_ZIP_2020$ZIP)]
+```
+```{r Moody County, SD has duplicates}
+usage_ZIP_2020 %>% filter(ZIP == "57065" | ZIP == "57017") 
+```
+Moody County is not listed in the County Name Change webpage on Census. The U.S. Census Quick Facts is used to check the current County ID for Moody, in SD. <https://www.census.gov/quickfacts/fact/table/moodycountysouthdakota,US/PST045221>
+The correct County ID for Moody, SD is 46101. 
+```{r Remove the old COUNTY.ID for Moody}
+usage_ZIP_2020 <- usage_ZIP_2020[!(usage_ZIP_2020$COUNTY.ID == "46102"),]
+# The resulting dataframe is 32707 rows 
+```
+### Re-check duplicated rows after handling the Moody County records 
+```{r}
+usage_ZIP_2020$ZIP[duplicated(usage_ZIP_2020$ZIP)]
+```
+There is still 54 rows of records that has duplicated county by ZIP. Therefore, a subset of the dataframe is used. 
+```{r}
+subset(usage_ZIP_2020,duplicated(ZIP))
+```
+There are two more counties that have similar issues.   
+```{r Todd County, MN}
+usage_ZIP_2020 %>% filter(ZIP == "56534" | ZIP == "56437") 
+```
+Todd County, MN should be COUNTY.ID == 27153
+```{r Washington County, MN}
+usage_ZIP_2020 %>% filter(ZIP == "55082" | ZIP == "56160") 
+```
+Washington County, MN should be 27163
+```{r Remove Todd and Washington County in MN}
+usage_ZIP_2020 <- usage_ZIP_2020[!(usage_ZIP_2020$COUNTY.ID == "27111"),]
+# The resulting dataframe is 32677 rows after removing Todd duplicates
+usage_ZIP_2020 <- usage_ZIP_2020[!(usage_ZIP_2020$COUNTY.ID == "27165"),]
+# The resulting dataframe is 32653 rows after removing Washington County duplicates
+```
+### Re-check duplicated record 
+```{r}
+usage_ZIP_2020$ZIP[duplicated(usage_ZIP_2020$ZIP)]
+```
+The duplicated records have been removed. The distinct rows of ZIP code is 32653 in the ZIP 2020 usage data file. 
+
+### Counts of County and State by ZIP
+```{r ZIP code by each State}
+usage_ZIP_2020 %>% count(ST)
+```
+
+```{r}
+usage_ZIP_2020 %>% count(COUNTY.ID)
+```
+
+```{r ZIP by County by State}
+#Each row is a ZIP code and so counting the COUNTY.NAME will show how many ZIP is in each county in each State.
+usage_ZIP_2020 %>% group_by(ST) %>% count(COUNTY.NAME)
+```
+
+```{r Unique count of ZIP code}
+length(unique(usage_ZIP_2020$ZIP))
+```
