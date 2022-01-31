@@ -2,11 +2,11 @@
 title: "Microsoft Broadband Usage 2020 Data Processing"
 author: "Cary K. Jim"
 output:
-  pdf_document: default
+  github_document: default
   html_document: default
 editor_options:
   markdown:
-    wrap: 72
+    wrap: 80
 ---
 
 ```{r setup, include=FALSE}
@@ -25,8 +25,8 @@ library(readxl)
 library(psychTools)
 ```
 
-# Microsoft Usage Data
-Source:<https://github.com/microsoft/USBroadbandUsagePercentages>
+# Microsoft Broadband Usage Data
+Data Source:<https://github.com/microsoft/USBroadbandUsagePercentages>
 
 # Oct 2020 data
 
