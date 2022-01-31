@@ -228,3 +228,9 @@ usage_ZIP_2020 %>% group_by(ST) %>% count(COUNTY.NAME)
 ```{r Unique count of ZIP code}
 length(unique(usage_ZIP_2020$ZIP))
 ```
+```{r Export file, include=FALSE}
+write.csv(usage_county_2020, "./Processed_files/usage_county_2020.csv", row.names = F)
+write.csv(usage_ZIP_2020, "./Processed_files/usage_ZIP_2020.csv", row.names = F)
+```
+
+
