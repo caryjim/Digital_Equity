@@ -97,7 +97,7 @@ was loaded as characters. We have to correct the data types before next
 step.
 
 ``` r
-#Rename columns to make timeframe explicit in the variables 
+#Rename columns to make time frame explicit in the variables 
 usage_county_2020 <- usage_county_2020 %>%
   rename(FCC2019_AVAIL = BROADBAND.AVAILABILITY.PER.FCC,
          USAGE_2020 = BROADBAND.USAGE)
@@ -250,7 +250,7 @@ head(usage_ZIP_2020)
     ## 6                  0.136  0.004
 
 ``` r
-#Rename columns to make timeframe explicit in the variables and fixed the long names 
+#Rename columns to make time frame explicit in the variables and fixed the long names 
 usage_ZIP_2020 <- usage_ZIP_2020 %>% 
   rename(USAGE_2020 = BROADBAND.USAGE)
 
