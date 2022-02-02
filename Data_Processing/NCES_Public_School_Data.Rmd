@@ -10,7 +10,7 @@ Data Source: NCES <https://nces.ed.gov/ccd/elsi/>
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-knitr::opts_knit$set(root.dir = "D://Documents//R//Dissertation" )
+knitr::opts_knit$set(root.dir = "D://Documents//R//Dissertation")
 ```
 
 Libraries
