@@ -1,0 +1,160 @@
+---
+title: "NECS ELSI K-12 Public School Data "
+author: "Cary K. Jim"
+date: 
+output: github_document
+---
+
+Data Source: NCES <https://nces.ed.gov/ccd/elsi/>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_knit$set(root.dir = "D://Documents//R//Dissertation" )
+```
+
+Libraries
+
+```{r}
+# Import libraries 
+library(tidyverse)
+library(stringr)
+library(janitor)
+```
+
+# NECS ESLI K-12 Public School Data
+
+## 2019-2020 School Level Data
+
+```{r}
+#The first 6 line of the file is description and not headings
+
+school <- read.csv("./Datasets/NCES/ELSI_school_2019to20.csv", skip = 6, header = T, sep = ",", strip.white = TRUE, fileEncoding="UTF-8-BOM")
+```
+
+Note. One way to open the file without file path, df \<- read_excel(file.choose())
+
+### View Dataframe
+
+```{r}
+# A common issue with the NCES ELSI exported file is the notes at the end of the file where comments of the data source and how missing values are marked in the dataset. 
+print(tail(school))
+```
+
+† indicates that the data are not applicable.  
+– indicates that the data are missing.  
+‡ indicates that the data do not meet NCES data quality standards.
+
+```{r}
+#customize the number of rows to import by skipping the top and bottom
+# I can measure the length of the file first 
+f <-nrow(school)
+print(f) #there are 99342 rows with 6 rows removed already 
+```
+```{r}
+#The math is 99342 - 6 to skip the description on top, and then 4 to skip the bottom ones for the original input. Here the file is re-read with the number of rows 
+school <- read.csv("./Datasets/NCES/ELSI_school_2019to20.csv", skip = 6, nrows=99338, header = T, sep = ",", strip.white = TRUE, fileEncoding="UTF-8-BOM")
+```
+
+### Dataframe and Data Types
+
+The long column headings in the csv file can be problematic. It will be modify 
+at a later time.
+
+```{r}
+str(school)
+```
+
+## 2019-2020 School by County Level Data
+
+```{r}
+#Import school by county list that is generated from NCES
+school_at_county <-read.csv('./Datasets/NCES/ELSI_county_2019to20.csv', skip = 6, nrows = 3146, header = T, strip.white = T, fileEncoding="UTF-8-BOM")
+#The original import has the similar issue where I have to skip the first 6 lines and truncate the tail. R will skip over blank rows on the original csv file. 
+```
+
+```{r}
+tail(school_at_county)
+```
+
+### Dataframe and Data Types
+
+```{r}
+colnames(school_at_county)
+```
+
+```{r}
+str(school_at_county)
+```
+
+## 2019-2020 School District List
+
+```{r}
+sch_district <-read.csv('./Datasets/NCES/ELSI_sch_district_2019to20.csv', skip = 6, nrows = 19390, header = T, strip.white = T, fileEncoding="UTF-8-BOM") #there are 19364 districts in the original import with skip, remove the last 4 to 19390
+```
+
+Check tail
+
+```{r}
+tail(sch_district)
+```
+
+### Dataframe and Data Types
+
+```{r}
+colnames(sch_district)
+```
+
+Data Type
+
+```{r}
+str(sch_district)
+```
+
+# Data Processing
+
+## School Level File
+
+The 'school' dataframe has the largest amount of information because it is a list of all schools in 2019-2020 reported in the NCES ELSI database. (29MB) There are some useful information to process at this point.
+
+### Remove demographic counts
+
+```{r}
+#The SEDA dataset with demographic information will be used, so we can drop that in the school dataset 
+school <- school[1:25]
+```
+
+### Data conversion
+
+```{r}
+#Column 1 to 20 are categorical data where column 21 to 37 should be numerical data 
+school[21:37] <- lapply(school[21:25], as.numeric)
+```
+
+While the NCES notes indicated the following coding mechanism:
+
+-   † indicates that the data are not applicable.
+-   – indicates that the data are missing.  
+-   ‡ indicates that the data do not meet NCES data quality standards. We will cover these into na when the numeric() function is applied.
+
+```{r}
+str(school)
+```
+
+### Check incomplete cases
+
+```{r}
+inc_school <- school[!complete.cases(school),]
+head(inc_school)
+```
+
+Based on the result, there are 64181 school with at least one or more missing values.
+
+At this stage, student enrollment is a variable to keep. There are missing information of student enrollment at certain schools. 
+```{r}
+#Determine how many schools do not have total enrollment information 
+sum(is.na(school$Total.Students.All.Grades..Excludes.AE...Public.School..2019.20))
+```
+
+3954/99338 indicated there are about 3.98 percent of schools with no enrollment information.
+
