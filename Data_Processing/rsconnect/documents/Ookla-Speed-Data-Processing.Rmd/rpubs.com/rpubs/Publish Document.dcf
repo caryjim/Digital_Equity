@@ -1,0 +1,11 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/861607/1e689b9bfb8846738c8e4202163888d8
+bundleId: https://api.rpubs.com/api/v1/document/861607/1e689b9bfb8846738c8e4202163888d8
+url: http://rpubs.com/caryjim/861607
+when: 1643921474.77376
+lastSyncTime: 1643921474.77376

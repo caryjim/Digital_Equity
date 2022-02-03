@@ -1,0 +1,131 @@
+---
+title: "FCC Broadband Deployment Data Processing"
+author: "Cary K. Jim"
+date: 
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_knit$set(root.dir = "D://Documents//R//Dissertation")
+```
+
+Data Source from FCC Fixed Broadband Deployment 
+<https://broadbandmap.fcc.gov/#/data-download>
+
+Background Information:
+Broadband Technologies can be categorized as:
+- ADSL
+- Cable
+- Fiber
+- Fixed wireless 
+- Satellite
+- Other
+
+Speed category of download/Upload (Mbps: Megabits per second) in more than > or equal = to:
+- 0.2/0.2
+- 4/1
+- 10/1
+- 25/3
+- 100/10
+- 250/25
+- 1000/100
+
+
+```{r cars}
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(stringr)
+library(janitor)
+library(readxl)
+```
+The Fixed Broadband Deployment Data from FCC Form 477 included All, FIXED, and MOBILE broadband providers.
+
+The Explanation of the Data <https://www.fcc.gov/general/explanation-broadband-deployment-data> provides the description of each element. 
+
+Definition of ISP <https://www.law.cornell.edu/wex/internet_service_provider_(isp)>
+
+Instruction for ISP on Reporting on 477 Form <https://us-fcc.app.box.com/v/FBDFormatting>
+
+# FCC data without satellite from June 2020 (~ 4.76 GB)
+
+```{r}
+fcc_none_satellite <- read.csv("./Datasets/FCC/fbd_us_without_satellite_jun2020_v1.csv", header = T)
+```
+
+Varibles that can be useful:
+BlockCode - 15 digit census block code used in the 2010 US Census (referred as GEOID)
+<https://transition.fcc.gov/form477/Geo/more_about_census_blocks.pdf>
+TechCode - is a 2 digita category code for the type of broadband technology <https://www.fcc.gov/general/technology-codes-used-fixed-broadband-deployment-data>
+Consumer - binary indicator of the ISP offer service for residential consumer
+MaxAdDown - Max. advertised downstream speed/bandwidth by provider for the block customer
+MasAdUp = Max. advertised upstream speed/bandwidth by provider for the block customer
+Business - binary indicator of the ISP offer service for business/government consumer (as of Dec 2019, business speed data are no longer collected)
+
+Notes on the dataset per FCC documentation: 
+- Records submitted for any water-only census blocks were removed.
+
+## Data Characteristics 
+```{r}
+colnames(fcc_none_satellite)
+```
+
+```{r}
+str(fcc_none_satellite)
+```
+
+```{r}
+head(fcc_none_satellite)
+```
+
+```{r}
+#Convert the block code as character for parsing 
+fcc_none_satellite[10] <- as.character(fcc_none_satellite$BlockCode)
+```
+View the dataframe again 
+```{r}
+head(fcc_none_satellite)
+```
+Census Block by State in FCC site <https://www.fcc.gov/general/census-blocks-state>
+
+Check how many census block group is there.
+```{r}
+fcc_none_satellite %>% group_by(BlockCode) %>% summarize()
+```
+
+substring in base R
+```{r}
+splitted <- t(sapply(fcc_none_satellite$BlockCode, function(x) substring(x, first=c(1,2,4), last=c(1,3,6))))
+```
+
+cbind(df, splitted)
+```{r}
+#Getting a list of BlockCode 
+block <- as.data.frame (fcc_none_satellite[, 10])
+block %>% n_distinct() #Check for distinct block in dataframe, there are 9527112
+```
+```{r}
+colnames(block)
+```
+
+```{r}
+splitted <- substr(block$"fcc_none_satellite[, 10]", 1, 11)
+head(splitted)
+```
+
+```{r}
+#Select the columns that is useful 
+```
+
+
+# FCC data with satellite from June 2020 (~ 10.4GB)
+
+```{r}
+fcc_w_satellite <- read.csv("D:\\Documents\\R\\Dissertation\\Datasets\\FCC\\fbd_us_with_satellite_jun2020_v1.csv",header = T)
+```
+
+
+
+
