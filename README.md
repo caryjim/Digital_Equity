@@ -1,7 +1,8 @@
 # Digital_Equity
-Repository for the doctoral dissertation work 
+Repository for the doctoral dissertation work (will be updated)
 
-Data Processing:
+Data Source:
+
 •	Public school characteristics and administrative record (National Center for Education Statistics, 2021a; 2021b)
 •	Microsoft broadband usage data at ZIP code and county level (Kahan & Ferres, 2020)
 •	Broadband availability data (Federal Commission of Communication, 2021)
