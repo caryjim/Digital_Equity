@@ -1,5 +1,5 @@
 # Digital_Equity
-Repository for the doctoral dissertation work (will be updated)
+Repository for the doctoral dissertation work (released in 2021, 2022)
 
 Data Source:
 
